@@ -97,7 +97,7 @@ Here are some examples from the dataset:
 * `bot_driving.py` - A script to allow movement automatically based on the results of neural network inference.
 
 ## Task
-The course is designed for 3 classes. The evaluation should be done in the last class - it is allowed to do it in 2 classes if the student prepares models at home.
+The project is designed for 3 classes. The evaluation should be done in the last class - it is allowed to do it in 2 classes if the student prepares models at home.
 
 **Your tasks are:**
 * start Jetbot, check its IP address and connect via `ssh`
