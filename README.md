@@ -101,7 +101,7 @@ The project is designed for 3 classes. The evaluation should be done in the last
 
 **Your tasks are:**
 * start Jetbot, check its IP address and connect via `ssh` (user: `jetbot`, password: `jetbot`)
-* using the `git` terminal client, clone this repository with a unique directory name (optionally create a fork and use it)
+* move to the `~/Student` directory; using the `git` terminal client, clone this repository with a unique directory name (optionally create a fork and use it)
 * set the config parameters according to your JetBot number
 * run the `user_driving.py` script and check the vehicle behaviour
   * you should use `python3` 
