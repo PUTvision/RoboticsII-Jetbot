@@ -55,16 +55,16 @@ The dataset consists of .csv files containing image name, forward signal, and le
 
 Here are some examples from the dataset:
 
-|    **Kind**   	| **Input image** 	| **Forward signal** 	| **Left signal** 	|
-|:-------------:	|:---------------:	|:------------------:	|:---------------:	|
-| Forward drive 	| ![forward image](README_files/0158.jpg) | 0.9921875	| 0.0 |
-|   Left curve  	| ![left curve](README_files/0180.jpg) | 0.453125	| 0.6328125	|
-|  Right curve  	| ![right curve](README_files/0219.jpg)  | 0.85	| -1.0	|
+|    **Kind**     | **Input image**   | **Forward signal**  | **Left signal**   |
+|:-------------:  |:---------------:  |:------------------: |:---------------:  |
+| Forward drive   | ![forward image](README_files/0158.jpg) | 0.9921875 | 0.0 |
+|   Left curve    | ![left curve](README_files/0180.jpg) | 0.453125 | 0.6328125 |
+|  Right curve    | ![right curve](README_files/0219.jpg)  | 0.85 | -1.0  |
 
 ## Scripts
 
 
-* `config.yml` - A configuration file containing key, fixed values.
+* `config.yml` - A configuration file containing key, and fixed values.
   
   Constants are responsible for maximum speed and steering force. You can change these values, but be careful - JetBot can be really fast! The following values are the default in the course, and the provided dataset was collected on them.
   ```yaml
@@ -80,11 +80,11 @@ Here are some examples from the dataset:
   ```
   For each vehicle, we calculated these values empirically:
 
-    | **Vehicle** 	| **robot.differential.left** 	| **robot.differential.right** 	|
-    |:-----------:	|:---------------------------:	|:----------------------------:	|
-    |  Jetbot 01  	|             1.0             	|              0.9             	|
-    |  Jetbot 02  	|                             	|                              	|
-    |  Jetbot 03  	|                             	|                              	|
+    | **Vehicle**   | **robot.differential.left**   | **robot.differential.right**  |
+    |:-----------:  |:---------------------------:  |:----------------------------: |
+    |  Jetbot 01    |             1.0               |              0.9              |
+    |  Jetbot 02    |                               |                               |
+    |  Jetbot 03    |                               |                               |
     
   When your deep learning model is ready on board of JetBot, specify the **absolute** path to it.
    ```yaml
@@ -92,35 +92,35 @@ Here are some examples from the dataset:
     path: ''
   ```
 
-* `PUTDriver.py` - A class of object that allows higher-level control of two JetBot wheels. 
-* `user_driving.py` - A script to control JetBot using a gamepad. By adding the "--record" flag you record the dataset to the "./dataset/{timestamp}/" directory. **Note: For an unknown reason, the sticks send out maximum values in both axes after start-up. For this reason, move the sticks to avoid a rapid acceleration.**
+* `PUTDriver.py` - An object class that allows higher-level control of two JetBot wheels. 
+* `user_driving.py` - A script to control JetBot using a gamepad. By adding the "--record" flag you record the dataset to the "./dataset/{timestamp}/" directory. **Note: For an unknown reason, the sticks send out maximum values in both axes after start-up. For this reason, move the sticks to avoid rapid acceleration.**
 * `bot_driving.py` - A script to allow movement automatically based on the results of neural network inference.
 
 ## Task
 The project is designed for 3 classes. The evaluation should be done in the last class - it is allowed to do it in 2 classes if the student prepares models at home.
 
 **Your tasks are:**
-* start Jetbot, check its IP address and connect via `ssh` (user: `jetbot`, password: `jetbot`)
+* start Jetbot, check its IP address, and connect via `ssh` (user: `jetbot`, password: `jetbot`)
 * move to the `~/Student` directory; using the `git` terminal client, clone this repository with a unique directory name (optionally create a fork and use it)
 * set the config parameters according to your JetBot number
-* run the `user_driving.py` script and check the vehicle behaviour
+* run the `user_driving.py` script and check the vehicle behavior
   * you should use `python3` 
 * (optionally) see [other examples](https://github.com/NVIDIA-AI-IOT/jetbot/tree/master/notebooks) of programmes
 * download the dataset and familiarise yourself with its structure
   * (optionally) collect your own data set to expand/replace downloaded
 * build a whole training pipeline and model in any framework
-  * the resolution of the input image shall be equal or less 224x224
+  * the resolution of the input image shall be equal to or less than 224x224
   * the output of the model should be 2 continuous values between <-1,1>
   * tips:
     * the model should not be too large due to computational limitations (in our case it was about 600k parameters)
-    * dataset is small, for this reason augmentations should be used, especially those affecting light changes
-    * how about doing some data shift and predicting 1/2 the control values ahead to deal with latency?
-    * **Due to limited time during the classes, we recommend preparing several models and testing them all and choosing the best one!**
+    * dataset is small, for this reason, augmentations should be used, especially those affecting light changes
+    * how about doing some data shift and predicting 1/2 of the control values ahead to deal with latency?
+    * **Due to limited time during the classes, we recommend preparing several models and testing them all, and choosing the best one!**
 * export your model to the universal onnx format
 * modify preprocess and postprocesses functions:
   * preprocessing should be based on your pipeline
     * note that the image channels order in the script is BGR
-    * note that input in onnx is always channel first (ex. (1, 3, 224, 224))
+    * note that input in onnx is always channel-first (ex. (1, 3, 224, 224))
   * postprocessing should:
     * return only 2 values clipped to the range <-1,1>
 * fine-tune the JetBot controller's hyperparameters
@@ -129,12 +129,16 @@ The project is designed for 3 classes. The evaluation should be done in the last
 ## Evaluation
 
 During the evaluation you should:
-* place the code of your pipeline and model architecture on the eKursy platform
-* (orally) describe the algorithm you used, how you processed the data and any changes to the default parameters
-* launch a driving demo of a vehicle that follows the road
+* place the code of your pipeline and model architecture on the eKursy platform (30%)
+* (orally) describe the algorithm you used, how you processed the data, and any changes to the default parameters (10%)
+* driving demo:
+  * launch a demo of a driving vehicle that follows the road (10%)
+  * complete half of the lap without accident (20%)
+  * complete one lap without accident (20%)
+  * complete two laps without accident (10%)
 
 
 ## Changelog
-* May 30, 2022 - Link to dataset added
-* May 29, 2022 - README instructions added
-* May 23, 2022 - Making the repository public
+* May 30, 2022 - Add the link to the dataset
+* May 29, 2022 - Add README instructions
+* May 23, 2022 - Make the repository public
