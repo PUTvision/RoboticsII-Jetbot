@@ -49,7 +49,7 @@ Like the authors of the publication, we decided to test this approach on a small
 
 ## Dataset
 
-The dataset collected by the course authors is publicly available, and you can find it here. You can use it or assemble your own using a gamepad!
+The dataset collected by the course authors is [publicly available, and you can find it here](https://chmura.put.poznan.pl/s/LxYSsota5PCbXcU). You can use it or assemble your own using a gamepad!
 
 The dataset consists of .csv files containing image name, forward signal, and left signal. The beginning and end of records have been removed to avoid teaching the vehicle zero values. 
 
@@ -100,7 +100,7 @@ Here are some examples from the dataset:
 The project is designed for 3 classes. The evaluation should be done in the last class - it is allowed to do it in 2 classes if the student prepares models at home.
 
 **Your tasks are:**
-* start Jetbot, check its IP address and connect via `ssh`
+* start Jetbot, check its IP address and connect via `ssh` (user: `jetbot`, password: `jetbot`)
 * using the `git` terminal client, clone this repository with a unique directory name (optionally create a fork and use it)
 * set the config parameters according to your JetBot number
 * run the `user_driving.py` script and check the vehicle behaviour
@@ -135,5 +135,6 @@ During the evaluation you should:
 
 
 ## Changelog
+* May 30, 2022 - Link to dataset added
 * May 29, 2022 - README instructions added
-* May 23, 2022 - making the repository public
+* May 23, 2022 - Making the repository public
