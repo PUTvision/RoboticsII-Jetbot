@@ -82,9 +82,9 @@ Here are some examples from the dataset:
 
     | **Vehicle**   | **robot.differential.left**   | **robot.differential.right**  |
     |:-----------:  |:---------------------------:  |:----------------------------: |
-    |  Jetbot 01    |             1.0               |              0.9              |
-    |  Jetbot 02    |                               |                               |
-    |  Jetbot 03    |                               |                               |
+    |  Jetbot 01    |             1.0               |              0.90             |
+    |  Jetbot 02    |             0.85              |              1.00             |
+    |  Jetbot 03    |             1.00              |              1.00             |
     
   When your deep learning model is ready on board of JetBot, specify the **absolute** path to it.
    ```yaml
