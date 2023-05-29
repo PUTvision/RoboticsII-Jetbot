@@ -1,12 +1,11 @@
 import cv2
 import onnxruntime as rt
 
-from jetbot import Camera
 from pathlib import Path
 import yaml
 import numpy as np
 
-from PUTDriver import PUTDriver
+from PUTDriver import PUTDriver, gstreamer_pipeline
 
 
 class AI:
@@ -57,10 +56,14 @@ def main():
     driver = PUTDriver(config=config)
     ai = AI(config=config)
 
-    camera = Camera.instance(width=224, height=224)
+    video_capture = cv2.VideoCapture(gstreamer_pipeline(flip_method=0, display_width=224, display_height=224), cv2.CAP_GSTREAMER)
 
     # model warm-up
-    image = camera.value
+    ret, image = video_capture.read()
+    if not ret:
+        print(f'No camera')
+        return
+    
     _ = ai.predict(image)
 
     input('Robot is ready to ride. Press Enter to start...')
@@ -70,7 +73,10 @@ def main():
         print(f'Forward: {forward:.4f}\tLeft: {left:.4f}')
         driver.update(forward, left)
 
-        image = camera.value
+        ret, image = video_capture.read()
+        if not ret:
+            print(f'No camera')
+            break
         forward, left = ai.predict(image)
 
 
