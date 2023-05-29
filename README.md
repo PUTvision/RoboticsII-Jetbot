@@ -85,6 +85,7 @@ Here are some examples from the dataset:
     |  Jetbot 01    |             1.0               |              0.90             |
     |  Jetbot 02    |             0.85              |              1.00             |
     |  Jetbot 03    |             1.00              |              1.00             |
+    |  Jetbot 04    |             1.00              |              1.00             |
     
   When your deep learning model is ready on board of JetBot, specify the **absolute** path to it.
    ```yaml
@@ -139,6 +140,7 @@ During the evaluation you should:
 
 
 ## Changelog
+* May 29, 2023 - Fix camera issues, define ONNX OPSET requirement, add JETBOT 04 params 
 * May 30, 2022 - Add the link to the dataset
 * May 29, 2022 - Add README instructions
 * May 23, 2022 - Make the repository public
