@@ -4,11 +4,10 @@ import click
 import math
 import threading
 import time
-from jetbot import Robot, Camera
 from pathlib import Path
 import yaml
 
-from PUTDriver import PUTDriver
+from PUTDriver import PUTDriver, gstreamer_pipeline
 
 
 class XboxController(object):
@@ -46,7 +45,7 @@ class XboxController(object):
 def save_data(key, index, image, forward, left):
     with open(f'./dataset/{key}.csv', 'a') as f:
         f.write(f'{index},{forward},{left}\n')
-        
+
     cv2.imwrite(f'./dataset/{key}/{index:04d}.jpg', image)
 
 
@@ -63,19 +62,23 @@ def main(record):
     joy = XboxController()
     driver = PUTDriver(config=config)
 
-    camera = Camera.instance(width=224, height=224)
+    video_capture = cv2.VideoCapture(gstreamer_pipeline(flip_method=0, display_width=224, display_height=224), cv2.CAP_GSTREAMER)
 
     if record:
-        prev_image = camera.value
+        prev_image = video_capture.read()[1]
         key = str(time.time())
         Path(f'./dataset/{key}/').mkdir()
         index = 0
 
         print(f'Robot is ready to ride. Grab to: ./dataset/{key}/')
 
+    input('Robot is ready to ride. Press both gamepad knobs and then enter to start...')
 
     while True:
-        image = camera.value
+        ret, image = video_capture.read()
+        if not ret:
+            print(f'No camera')
+            break
 
         forward, left = joy.read()
         print(f'Forward: {forward:.4f}\tLeft: {left:.4f}')
