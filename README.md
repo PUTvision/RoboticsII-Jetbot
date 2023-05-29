@@ -116,7 +116,7 @@ The project is designed for 3 classes. The evaluation should be done in the last
     * dataset is small, for this reason, augmentations should be used, especially those affecting light changes
     * how about doing some data shift and predicting 1/2 of the control values ahead to deal with latency?
     * **Due to limited time during the classes, we recommend preparing several models and testing them all, and choosing the best one!**
-* export your model to the universal onnx format
+* export your model to the universal onnx format (**IMPORTANT** define OPSET 11)
 * modify preprocess and postprocesses functions:
   * preprocessing should be based on your pipeline
     * note that the image channels order in the script is BGR
