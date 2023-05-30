@@ -95,20 +95,24 @@ Here are some examples from the dataset:
 
 * `PUTDriver.py` - An object class that allows higher-level control of two JetBot wheels. 
 * `user_driving.py` - A script to control JetBot using a gamepad. By adding the "--record" flag you record the dataset to the "./dataset/{timestamp}/" directory. **Note: For an unknown reason, the sticks send out maximum values in both axes after start-up. For this reason, move the sticks to avoid rapid acceleration.**
+* `keyboard_driving.py` - A script to control JetBot using a keyboard.
 * `bot_driving.py` - A script to allow movement automatically based on the results of neural network inference.
 
 ## Task
 The project is designed for 3 classes. The evaluation should be done in the last class - it is allowed to do it in 2 classes if the student prepares models at home.
 
 **Your tasks are:**
+* connect your device to `VISION_student` network (`password: vision_student`),
+  * WIFI adapters are required when using PCs
 * start Jetbot, check its IP address, and connect via `ssh` (user: `jetbot`, password: `jetbot`)
 * move to the `~/Student` directory; using the `git` terminal client, clone this repository with a unique directory name (optionally create a fork and use it)
 * set the config parameters according to your JetBot number
-* run the `user_driving.py` script and check the vehicle behavior
+* run the `keyboard_driving.py` script and check the vehicle behavior
   * you should use `python3` 
 * (optionally) see [other examples](https://github.com/NVIDIA-AI-IOT/jetbot/tree/master/notebooks) of programmes
 * download the dataset and familiarise yourself with its structure
   * (optionally) collect your own data set to expand/replace downloaded
+    * ask tutor for gampad and run the `user_driving.py` script
 * build a whole training pipeline and model in any framework
   * the resolution of the input image shall be equal to or less than 224x224
   * the output of the model should be 2 continuous values between <-1,1>
@@ -140,6 +144,7 @@ During the evaluation you should:
 
 
 ## Changelog
+* May 30, 2023 - Add keyboard driving
 * May 29, 2023 - Fix camera issues, define ONNX OPSET requirement, add JETBOT 04 params 
 * May 30, 2022 - Add the link to the dataset
 * May 29, 2022 - Add README instructions
