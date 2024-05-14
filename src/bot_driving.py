@@ -18,15 +18,15 @@ class AI:
         self.input_name = self.sess.get_inputs()[0].name
 
     def preprocess(self, img: np.ndarray) -> np.ndarray:
-        ##TODO: preprocess your input image, remember that img is in BGR channels order
-        raise NotImplementedError
-
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (224, 224))
+        img = img.transpose(2, 0, 1)
+        img = np.expand_dims(img, axis=0)
+        img = img.astype(np.float32)
         return img
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
-        ##TODO: prepare your outputs
-        raise NotImplementedError
-
+        detections = np.clip(detections, -1.0, 1.0)
         return detections
 
     def predict(self, img: np.ndarray) -> np.ndarray:
