@@ -1,13 +1,20 @@
 import sys
+import os
+
+import cv2 as cv
 
 import numpy as np
+import pandas as pd
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
+from torchvision import transforms
+from torchvision.io import read_image
 from torchsummary import summary
+
+from dataloader import CustomDataLoader
 
 import tqdm
 
@@ -68,6 +75,9 @@ def training_loop(model,train_dataloader,epochs=10,loss=nn.L1Loss,optimizer=opti
             optimizer.step()
             loss += loss.item()
 
+
+
+
 def main(*argv):
     train_transform = transforms.Compose([
         transforms.RandomRotation(10),
@@ -75,9 +85,17 @@ def main(*argv):
         transforms.GaussianBlur(5, sigma=(0.1, 2.0)),        
         transforms.Normalize((0.1307,), (0.3081,)) 
     ])
-    model = create_model()
-    summary(model,(3,224,224))
+    #model = create_model()
+    #summary(model,(3,224,224))
 
+    data = CustomDataLoader("./data/dataset/")
+
+    print(len(data))
+    print(data.labels[0])
+    img,lab = data[182]
+    print(lab)
+    cv.imshow("in", cv.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv.COLOR_BGR2RGB))
+    cv.waitKey(0)
     return 0
 
 if __name__ == "__main__":
