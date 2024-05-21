@@ -6,6 +6,8 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 
+from sklearn.model_selection import train_test_split
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -14,7 +16,7 @@ from torchvision import transforms
 from torchvision.io import read_image
 from torchsummary import summary
 
-from dataloader import CustomDataLoader
+from dataloader import CustomDataLoader,SubsetDataLoader
 
 import tqdm
 
@@ -80,22 +82,27 @@ def training_loop(model,train_dataloader,epochs=10,loss=nn.L1Loss,optimizer=opti
 
 def main(*argv):
     train_transform = transforms.Compose([
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),        
-        transforms.GaussianBlur(5, sigma=(0.1, 2.0)),        
-        transforms.Normalize((0.1307,), (0.3081,)) 
+        transforms.RandomRotation(10),      
+        transforms.GaussianBlur(5, sigma=(0.1, 2.0))
     ])
     #model = create_model()
     #summary(model,(3,224,224))
 
-    data = CustomDataLoader("./data/dataset/")
+    path = "./data/dataset/"
 
-    print(len(data))
-    print(data.labels[0])
-    img,lab = data[182]
-    print(lab)
-    cv.imshow("in", cv.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv.COLOR_BGR2RGB))
-    cv.waitKey(0)
+    data = CustomDataLoader(path)
+
+    idx = np.arange(len(data))
+
+    train_idx,rest_idx = train_test_split(idx,test_size=0.3)
+    test_idx,val_idx = train_test_split(rest_idx,test_size=0.5)
+
+    train_data = SubsetDataLoader(path,train_idx,train_transform)
+
+    img,lab = train_data[182]
+    # cv.imshow("in", cv.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv.COLOR_BGR2RGB))
+    # cv.waitKey(0)
+    # return 0
     return 0
 
 if __name__ == "__main__":

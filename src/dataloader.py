@@ -37,3 +37,20 @@ class CustomDataLoader(DataLoader):
         image = read_image(self.path+self.folder_names[folder]+"/"+self.images[folder][idx])
 
         return image,label
+    
+    def __iter__(self):
+        for idx in range(len(self)):
+            return self[idx]
+    
+class SubsetDataLoader(CustomDataLoader):
+    def __init__(self,path,subset_ids,transforms=None):
+        super(SubsetDataLoader,self).__init__(path)
+        self.subset_ids = subset_ids
+        self.transforms = transforms
+
+    def __len__(self):
+        return len(self.subset_ids)
+    
+    def __getitem__(self,idx):
+        img,label = super(SubsetDataLoader,self).__getitem__(self.subset_ids[idx])
+        return (self.transforms(img) if transforms != None else img),label
