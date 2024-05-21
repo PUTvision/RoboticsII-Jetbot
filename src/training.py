@@ -12,11 +12,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.io import read_image
 from torchsummary import summary
 
-from dataloader import CustomDataLoader,SubsetDataLoader
+from dataloader import JetbotDataset,SubsetJetbotDataset
 
 from tqdm import tqdm
 
@@ -72,7 +73,7 @@ def training_loop(model,train_dataloader,val_dataloader,epochs=10,loss=nn.L1Loss
         train_loss = 0.0
         for i, (X,y) in enumerate(train_dataloader):
             optimizer.zero_grad()
-            outputs = model(X)
+            outputs = model(X.float())
             loss = criterion(outputs,y)
             loss.backward()
             optimizer.step()
@@ -102,22 +103,26 @@ def main(*argv):
 
     path = "./data/dataset/"
 
-    data = CustomDataLoader(path)
+    data = JetbotDataset(path,batch_size=64)
 
     idx = np.arange(len(data))
 
     train_idx,rest_idx = train_test_split(idx,test_size=0.3)
     test_idx,val_idx = train_test_split(rest_idx,test_size=0.5)
 
-    train_data = SubsetDataLoader(path,train_idx,train_transform)
-    val_data = SubsetDataLoader(path,val_idx,train_transform)
+    train_data = SubsetJetbotDataset(path,train_idx,train_transform)
+    val_data = SubsetJetbotDataset(path,val_idx,train_transform)
 
     # img,lab = train_data[182]
     # cv.imshow("in", cv.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv.COLOR_BGR2RGB))
     # cv.waitKey(0)
     # return 0
 
-    training_loop(model,train_data,val_data)
+    training_loop(model,DataLoader(train_data,64),DataLoader(val_data,64))
+
+    torch_input = torch.randn(*(1,3,224,224))
+    onnx_program = torch.onnx.dynamo_export(model, torch_input)
+    onnx_program.save("./model.onnx")
 
     return 0
 
