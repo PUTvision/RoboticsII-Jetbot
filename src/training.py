@@ -18,7 +18,7 @@ from torchsummary import summary
 
 from dataloader import CustomDataLoader,SubsetDataLoader
 
-import tqdm
+from tqdm import tqdm
 
 # class ConvolutionalModel(nn.Module):
 #     def __init__(self,input_size=224):
@@ -64,19 +64,31 @@ def create_model():
 
     return nn.Sequential(*layers)
 
-def training_loop(model,train_dataloader,epochs=10,loss=nn.L1Loss,optimizer=optim.SGD,optimizer_params=[]):
+def training_loop(model,train_dataloader,val_dataloader,epochs=10,loss=nn.L1Loss,optimizer=optim.SGD,optimizer_params=[]):
     criterion = loss()
-    optimizer = optimizer(*optimizer_params)
+    optimizer = optimizer(model.parameters(),*optimizer_params)
     for epoch in tqdm(range(epochs)):
         model.train()
+        train_loss = 0.0
         for i, (X,y) in enumerate(train_dataloader):
             optimizer.zero_grad()
             outputs = model(X)
             loss = criterion(outputs,y)
             loss.backward()
             optimizer.step()
-            loss += loss.item()
+            train_loss += loss.item()
+    train_loss = train_loss / len(train_dataloader)
 
+    model.eval()
+    val_loss = 0.0
+    with torch.no_grad():
+        for inputs, labels in val_dataloader:
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            val_loss += loss.item()
+    val_loss = val_loss / len(val_dataloader)
+            
+    print(f'Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}')
 
 
 
@@ -85,8 +97,8 @@ def main(*argv):
         transforms.RandomRotation(10),      
         transforms.GaussianBlur(5, sigma=(0.1, 2.0))
     ])
-    #model = create_model()
-    #summary(model,(3,224,224))
+    model = create_model()
+    summary(model,(3,224,224))
 
     path = "./data/dataset/"
 
@@ -98,11 +110,15 @@ def main(*argv):
     test_idx,val_idx = train_test_split(rest_idx,test_size=0.5)
 
     train_data = SubsetDataLoader(path,train_idx,train_transform)
+    val_data = SubsetDataLoader(path,val_idx,train_transform)
 
-    img,lab = train_data[182]
+    # img,lab = train_data[182]
     # cv.imshow("in", cv.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv.COLOR_BGR2RGB))
     # cv.waitKey(0)
     # return 0
+
+    training_loop(model,train_data,val_data)
+
     return 0
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ class CustomDataLoader(DataLoader):
 
     def __iter__(self):
         for idx in range(len(self)):
-            return self[idx]
+            yield self[idx]
 
 class SubsetDataLoader(CustomDataLoader):
     def __init__(self,path,subset_ids,transforms=None):
@@ -53,8 +53,4 @@ class SubsetDataLoader(CustomDataLoader):
     
     def __getitem__(self,idx):
         img,label = super(SubsetDataLoader,self).__getitem__(self.subset_ids[idx])
-<<<<<<< HEAD
-        return (self.transforms(img) if transforms != None else img),label
-=======
-        return (self.transforms(img) if transforms != None else img),label
->>>>>>> cab87c56303aaed14cb555da636eae8cdb9045ad
+        return (self.transforms(img) if self.transforms != None else img),label
