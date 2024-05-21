@@ -30,7 +30,7 @@ from tqdm import tqdm
 #         self.convs = []
 #         for a,b in zip(conv_params[:-1],conv_params[1:]):
 #             self.convs.append(nn.Conv2d(a,b,kernel_size=5))
-        
+
 #         linear_params = [10*10*64,64,2]
 #         self.linears = []
 #         for a,b in zip(linear_params[:-1],linear_params[1:]):
@@ -46,32 +46,42 @@ from tqdm import tqdm
 #             x = F.relu(lin(x))
 #         return F.tanh(x)
 
+
 def create_model():
     layers = []
-    conv_params = [3,8,16,32,64]
-    for a,b in zip(conv_params[:-1],conv_params[1:]):
-        layers.append(nn.Conv2d(a,b,kernel_size=5))
+    conv_params = [3, 8, 16, 32, 64]
+    for a, b in zip(conv_params[:-1], conv_params[1:]):
+        layers.append(nn.Conv2d(a, b, kernel_size=5))
         layers.append(nn.ReLU())
         layers.append(nn.MaxPool2d(2))
     layers.append(nn.Flatten())
-    linear_params = [10*10*64,64,2]
+    linear_params = [10 * 10 * 64, 64, 2]
     out = linear_params.pop(-1)
-    for a,b in zip(linear_params[:-1],linear_params[1:]):
-        layers.append(nn.Linear(a,b))
+    for a, b in zip(linear_params[:-1], linear_params[1:]):
+        layers.append(nn.Linear(a, b))
         layers.append(nn.ReLU())
 
-    layers.append(nn.Linear(linear_params[-1],out))
+    layers.append(nn.Linear(linear_params[-1], out))
     layers.append(nn.Tanh())
 
     return nn.Sequential(*layers)
 
-def training_loop(model,train_dataloader,val_dataloader,epochs=10,loss=nn.L1Loss,optimizer=optim.SGD,optimizer_params=[]):
+
+def training_loop(
+    model,
+    train_dataloader,
+    val_dataloader,
+    epochs=10,
+    loss=nn.L1Loss,
+    optimizer=optim.SGD,
+    optimizer_params=[],
+):
     criterion = loss()
-    optimizer = optimizer(model.parameters(),*optimizer_params)
+    optimizer = optimizer(model.parameters(), *optimizer_params)
     for epoch in tqdm(range(epochs)):
         model.train()
         train_loss = 0.0
-        for i, (X,y) in enumerate(train_dataloader):
+        for i, (X, y) in enumerate(train_dataloader):
             optimizer.zero_grad()
             outputs = model(X.float())
             loss = criterion(outputs,y)
@@ -88,9 +98,10 @@ def training_loop(model,train_dataloader,val_dataloader,epochs=10,loss=nn.L1Loss
             loss = criterion(outputs, labels)
             val_loss += loss.item()
     val_loss = val_loss / len(val_dataloader)
-            
-    print(f'Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}')
 
+    print(
+        f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}"
+    )
 
 
 def main(*argv):
@@ -101,7 +112,7 @@ def main(*argv):
         transforms.GaussianBlur(5, sigma=(0.1, 2.0))
     ])
     model = create_model()
-    summary(model,(3,224,224))
+    summary(model, (3, 224, 224))
 
     path = "./data/dataset/"
 
@@ -109,8 +120,8 @@ def main(*argv):
 
     idx = np.arange(len(data))
 
-    train_idx,rest_idx = train_test_split(idx,test_size=0.3)
-    test_idx,val_idx = train_test_split(rest_idx,test_size=0.5)
+    train_idx, rest_idx = train_test_split(idx, test_size=0.3)
+    test_idx, val_idx = train_test_split(rest_idx, test_size=0.5)
 
     train_data = SubsetJetbotDataset(path,train_idx,train_transform)
     val_data = SubsetJetbotDataset(path,val_idx,train_transform)
@@ -127,6 +138,7 @@ def main(*argv):
     onnx_program.save("./model.onnx")
 
     return 0
+
 
 if __name__ == "__main__":
     main(*sys.argv)
