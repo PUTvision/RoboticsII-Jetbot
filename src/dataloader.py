@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 
+import cv2 as cv
+
 from torch.utils.data import DataLoader,Dataset
 from torchvision import datasets, transforms
 from torchvision.io import read_image
@@ -34,7 +36,7 @@ class JetbotDataset(Dataset):
 
         label = self.labels[folder].iloc[idx,1:] if len(self.labels[folder]) > idx else self.labels[folder].iloc[-1,1:]
 
-        image = read_image(self.path+self.folder_names[folder]+"/"+self.images[folder][idx])
+        image = cv.imread(self.path+self.folder_names[folder]+"/"+self.images[folder][idx])#read_image(self.path+self.folder_names[folder]+"/"+self.images[folder][idx])
 
         return image,label.to_numpy()
 

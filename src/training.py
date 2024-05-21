@@ -95,7 +95,9 @@ def training_loop(model,train_dataloader,val_dataloader,epochs=10,loss=nn.L1Loss
 
 def main(*argv):
     train_transform = transforms.Compose([
-        transforms.RandomRotation(10),      
+        transforms.ToTensor(),
+        transforms.RandomRotation(10),
+        transforms.ColorJitter(0.5,0.5,0.5,0.5),
         transforms.GaussianBlur(5, sigma=(0.1, 2.0))
     ])
     model = create_model()
@@ -118,7 +120,7 @@ def main(*argv):
     # cv.waitKey(0)
     # return 0
 
-    training_loop(model,DataLoader(train_data,64),DataLoader(val_data,64))
+    training_loop(model,DataLoader(train_data,64),DataLoader(val_data,64),epochs=1)
 
     torch_input = torch.randn(*(1,3,224,224))
     onnx_program = torch.onnx.dynamo_export(model, torch_input)
