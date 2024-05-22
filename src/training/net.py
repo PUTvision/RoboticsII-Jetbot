@@ -8,29 +8,24 @@ class ConvNet(nn.Module):
     ):
         super(ConvNet, self).__init__()
 
-        conv_block = []
+        blocks = []
 
         for a, b in zip(conv_sizes[:-1], conv_sizes[1:]):
-            conv_block.append(nn.Conv2d(a, b, kernel_size=5))
-            conv_block.append(nn.ReLU())
-            conv_block.append(nn.MaxPool2d(2))
+            blocks.append(nn.Conv2d(a, b, kernel_size=5))
+            blocks.append(nn.ReLU())
+            blocks.append(nn.BatchNorm2d(b))
+            blocks.append(nn.MaxPool2d(2))
 
-        self.conv_block = nn.Sequential(*conv_block)
-        self.flatten = nn.Flatten()
-
-        linear_block = []
+        blocks.append(nn.Flatten())
 
         for a, b in zip(linear_sizes[:-1], linear_sizes[1:]):
-            linear_block.append(nn.Linear(a, b))
-            linear_block.append(nn.ReLU())
+            blocks.append(nn.Linear(a, b))
+            blocks.append(nn.ReLU())
 
-        linear_block.append(nn.Linear(linear_sizes[-1], output_size))
-        linear_block.append(nn.Tanh())
+        blocks.append(nn.Linear(linear_sizes[-1], output_size))
+        blocks.append(nn.Tanh())
 
-        self.linear_block = nn.Sequential(*linear_block)
+        self.net = nn.Sequential(*blocks)
 
     def forward(self, x):
-        x = self.conv_block(x)
-        x = self.flatten(x)
-        x = self.linear_block(x)
-        return x
+        return self.net(x)
