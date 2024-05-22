@@ -13,10 +13,13 @@ python = "^3.9"
 torch = {version = "^2.3.0+cpu", source = "pytorch_cpu"}
 torchvision = {version = "^0.18.0+cpu", source = "pytorch_cpu"}
 opencv-python = "^4.9.0.80"
-scikit-learn = "^1.4.2"
 pandas = "^2.2.2"
 torchsummary = "^1.5.1"
 tqdm = "^4.66.4"
+sshkeyboard = "^2.3.1"
+inputs = "^0.5"
+pyyaml = "^6.0.1"
+onnxruntime = "^1.18.0"
 
 
 [[tool.poetry.source]]
