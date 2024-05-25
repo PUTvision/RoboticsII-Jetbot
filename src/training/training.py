@@ -88,19 +88,21 @@ def training_loop(
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
+            if i == 5:
+                break
     train_loss = train_loss / len(train_dataloader)
 
     model.eval()
     val_loss = 0.0
-    with torch.no_grad():
-        for inputs, labels in val_dataloader:
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            val_loss += loss.item()
-    val_loss = val_loss / len(val_dataloader)
+    # with torch.no_grad():
+    #     for inputs, labels in val_dataloader:
+    #         outputs = model(inputs)
+    #         loss = criterion(outputs, labels)
+    #         val_loss += loss.item()
+    # val_loss = val_loss / len(val_dataloader)
 
     print(
-        f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}"
+        f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {0:.4f}"
     )
 
 
@@ -134,8 +136,18 @@ def main(*argv):
     training_loop(model,DataLoader(train_data,64),DataLoader(val_data,64),epochs=1)
 
     torch_input = torch.randn(*(1,3,224,224))
-    onnx_program = torch.onnx.dynamo_export(model, torch_input)
-    onnx_program.save("./model.onnx")
+
+    torch.onnx.export(
+        model,                      # model to be exported
+        torch_input,                # sample input tensor
+        "./model.onnx",             # where to save the ONNX file
+        export_params=True,         # store the trained parameter weights inside the model file
+        opset_version=11,           # specify the ONNX opset version
+        do_constant_folding=True,   # perform constant folding for optimization
+        input_names=['input'],      # the model's input names
+        output_names=['output'],    # the model's output names
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # dynamic axes for variable batch size
+    )
 
     return 0
 

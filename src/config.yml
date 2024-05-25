@@ -1,5 +1,5 @@
 model:
-  path: ''
+  path: './model.onnx'
 
 robot:
   max_speed: 0.22
