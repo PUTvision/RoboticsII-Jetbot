@@ -11,16 +11,18 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
         self,
         path: str,
         transforms: Optional[Callable] = None,
+        shift = 0 # to adjust for latency in model
     ):
         super(JetbotDataset, self).__init__(root=path, transforms=transforms)
         self.labels, self.images = load_files(path)
+        self.shift = shift
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
         img = torchvision.io.read_image(self.images[idx])
-        label = torch.tensor(self.labels[idx][1:], dtype=torch.float32)
+        label = torch.tensor(self.labels[max(idx-self.shift,0)][1:], dtype=torch.float32)
 
         if not self.transforms:
             return img, label

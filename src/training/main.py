@@ -7,8 +7,8 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from typing import Tuple
 
-from src.training.net import ConvNet
-from src.training.data import JetbotDataset
+from net import ConvNet
+from data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
 BATCH_SIZE = 64
@@ -24,7 +24,7 @@ def train_epoch(
     model.train()
     train_loss = 0.0
 
-    for X, y in tqdm(train_loader):
+    for X, y in tqdm(train_loader,"batch"):
         X, y = X.to(device), y.to(device)
         optimizer.zero_grad()
         y_pred = model(X)
@@ -61,7 +61,7 @@ def train(
 ):
     history = {"train_loss": [], "val_loss": []}
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs),"epochs"):
         train_loss = train_epoch(model, train_loader, loss_fn, optimizer, device)
         val_loss = val_epoch(model, val_loader, loss_fn, device)
 
@@ -102,7 +102,7 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
         ]
     )
 
-    ds = JetbotDataset(DATA_PATH, transform)
+    ds = JetbotDataset(DATA_PATH, transform,shift=5) # predict the move 5 frames earlier
 
     train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
 
@@ -113,17 +113,20 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
 
 if __name__ == "__main__":
     if torch.backends.mps.is_available():
+        print("Device is mps")
         device = torch.device("mps")
     elif torch.cuda.is_available():
+        print("Device is cuda")
         device = torch.device("cuda")
     else:
+        print("Device is cpu")
         device = torch.device("cpu")
 
     generator = torch.Generator().manual_seed(42)
     train_loader, test_loader = get_data(generator)
     model = ConvNet([3, 8, 16, 32, 64], [64 * 10 * 10, 64], 2)
     model.to(device)
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.L1Loss()
     optimizer = optim.SGD(model.parameters(), lr=0.001)
 
     history = train(
@@ -133,3 +136,18 @@ if __name__ == "__main__":
     test_loss = test(model, test_loader, loss_fn, device)
 
     print(f"Test Loss: {test_loss:.4f}")
+
+    torch_input = torch.randn(*(1,3,224,224))
+
+    torch.onnx.export(
+        model,                      # model to be exported
+        torch_input,                # sample input tensor
+        "./model.onnx",             # where to save the ONNX file
+        export_params=True,         # store the trained parameter weights inside the model file
+        opset_version=11,           # specify the ONNX opset version
+        do_constant_folding=True,   # perform constant folding for optimization
+        input_names=['input'],      # the model's input names
+        output_names=['output'],    # the model's output names
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # dynamic axes for variable batch size
+    )
+
