@@ -11,7 +11,7 @@ from net import ConvNet
 from data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 
 
 def train_epoch(
@@ -130,14 +130,14 @@ if __name__ == "__main__":
     optimizer = optim.SGD(model.parameters(), lr=0.001)
 
     history = train(
-        model, train_loader, test_loader, loss_fn, optimizer, device, epochs=10
+        model, train_loader, test_loader, loss_fn, optimizer, device, epochs=1
     )
 
     test_loss = test(model, test_loader, loss_fn, device)
 
     print(f"Test Loss: {test_loss:.4f}")
 
-    torch_input = torch.randn(*(1,3,224,224))
+    torch_input = torch.randn(*(1,3,224,224)).to(device)
 
     torch.onnx.export(
         model,                      # model to be exported
