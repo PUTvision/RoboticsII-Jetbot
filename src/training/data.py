@@ -22,7 +22,7 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 
     def __getitem__(self, idx):
         img = torchvision.io.read_image(self.images[idx])
-        label = torch.tensor(self.labels[max(idx-self.shift,0)][1:], dtype=torch.float32)
+        label = torch.tensor(self.labels[min(idx+self.shift,len(self.labels)-1)][1:], dtype=torch.float32)
 
         if not self.transforms:
             return img, label
