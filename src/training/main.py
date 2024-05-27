@@ -7,6 +7,9 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from typing import Tuple
 
+import cv2
+import numpy as np
+
 from net import ConvNet
 from data import JetbotDataset
 
@@ -93,16 +96,22 @@ def test(
 def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
     transform = transforms.Compose(
         [
-            transforms.RandomRotation([10, 10]),
-            transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
+            transforms.RandomRotation([5, 5]),
+            transforms.RandomResizedCrop(224, scale=(0.9, 1.0)),
             transforms.ColorJitter(0.5, 0.5, 0.5, 0.5),
             transforms.GaussianBlur(5, sigma=(0.1, 2.0)),
-            transforms.RandomHorizontalFlip(),
+            #transforms.RandomHorizontalFlip(), #should not be here since the model would confuse left and right
             transforms.ToDtype(torch.float32, scale=True),
         ]
     )
 
-    ds = JetbotDataset(DATA_PATH, transform,shift=5) # predict the move 5 frames earlier
+    ds = JetbotDataset(DATA_PATH, transform,shift=5) # predict the move 5 frames later and 10 framers later
+
+    # for i in [182,2137,4312]:
+    #     img,lab = ds[i]
+    #     cv2.imshow("in", cv2.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv2.COLOR_BGR2RGB))
+    #     cv2.waitKey(0)
+
 
     train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
 
