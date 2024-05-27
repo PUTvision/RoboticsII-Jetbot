@@ -11,7 +11,7 @@ from net import ConvNet
 from data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 
 
 def train_epoch(
@@ -124,13 +124,13 @@ if __name__ == "__main__":
 
     generator = torch.Generator().manual_seed(42)
     train_loader, test_loader = get_data(generator)
-    model = ConvNet([3, 8, 16, 32, 64], [64 * 10 * 10, 64], 2)
+    model = ConvNet([3, 8, 16, 32, 64], [64 * 10 * 10, 64], 6)
     model.to(device)
-    loss_fn = nn.L1Loss()
+    loss_fn = nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
     optimizer = optim.SGD(model.parameters(), lr=0.001)
 
     history = train(
-        model, train_loader, test_loader, loss_fn, optimizer, device, epochs=1
+        model, train_loader, test_loader, loss_fn, optimizer, device, epochs=10
     )
 
     test_loss = test(model, test_loader, loss_fn, device)
