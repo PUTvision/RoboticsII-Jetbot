@@ -11,7 +11,7 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
         self,
         path: str,
         transforms: Optional[Callable] = None,
-        shift = 0 # to adjust for latency in model
+        shift=0,  # to adjust for latency in model
     ):
         super(JetbotDataset, self).__init__(root=path, transforms=transforms)
         self.labels, self.images = load_files(path)
@@ -22,9 +22,14 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 
     def __getitem__(self, idx):
         img = torchvision.io.read_image(self.images[idx])
-        label = torch.tensor((self.labels[min(idx,len(self.labels)-1)][1:] + 
-                              self.labels[min(idx+self.shift,len(self.labels)-1)][1:] + 
-                              self.labels[min(idx+2*self.shift,len(self.labels)-1)][1:]), dtype=torch.float32)
+        label = torch.tensor(
+            (
+                self.labels[min(idx, len(self.labels) - 1)][1:]
+                + self.labels[min(idx + self.shift, len(self.labels) - 1)][1:]
+                + self.labels[min(idx + 2 * self.shift, len(self.labels) - 1)][1:]
+            ),
+            dtype=torch.float32,
+        )
 
         if not self.transforms:
             return img, label

@@ -7,11 +7,9 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from typing import Tuple
 
-import cv2
-import numpy as np
 
-from net import ConvNet
-from data import JetbotDataset
+from src.training.net import ConvNet
+from src.training.data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
 BATCH_SIZE = 64
@@ -27,7 +25,7 @@ def train_epoch(
     model.train()
     train_loss = 0.0
 
-    for X, y in tqdm(train_loader,"batch"):
+    for X, y in tqdm(train_loader, "batch"):
         X, y = X.to(device), y.to(device)
         optimizer.zero_grad()
         y_pred = model(X)
@@ -64,7 +62,7 @@ def train(
 ):
     history = {"train_loss": [], "val_loss": []}
 
-    for epoch in tqdm(range(epochs),"epochs"):
+    for epoch in range(epochs):
         train_loss = train_epoch(model, train_loader, loss_fn, optimizer, device)
         val_loss = val_epoch(model, val_loader, loss_fn, device)
 
@@ -85,7 +83,7 @@ def test(
     model.eval()
     test_loss = 0.0
     with torch.no_grad():
-        for X, y in tqdm(test_loader):
+        for X, y in tqdm(test_loader, "test_batch"):
             X, y = X.to(device), y.to(device)
             y_pred = model(X)
             loss = loss_fn(y_pred, y)
@@ -100,18 +98,19 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
             transforms.RandomResizedCrop(224, scale=(0.9, 1.0)),
             transforms.ColorJitter(0.5, 0.5, 0.5, 0.5),
             transforms.GaussianBlur(5, sigma=(0.1, 2.0)),
-            #transforms.RandomHorizontalFlip(), #should not be here since the model would confuse left and right
+            # transforms.RandomHorizontalFlip(), #should not be here since the model would confuse left and right
             transforms.ToDtype(torch.float32, scale=True),
         ]
     )
 
-    ds = JetbotDataset(DATA_PATH, transform,shift=5) # predict the move 5 frames later and 10 framers later
+    ds = JetbotDataset(
+        DATA_PATH, transform, shift=5
+    )  # predict the move 5 frames later and 10 framers later
 
     # for i in [182,2137,4312]:
     #     img,lab = ds[i]
     #     cv2.imshow("in", cv2.cvtColor(np.transpose(img.numpy(),(1,2,0)),cv2.COLOR_BGR2RGB))
     #     cv2.waitKey(0)
-
 
     train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
 
@@ -135,7 +134,9 @@ if __name__ == "__main__":
     train_loader, test_loader = get_data(generator)
     model = ConvNet([3, 8, 16, 32, 64], [64 * 10 * 10, 64], 6)
     model.to(device)
-    loss_fn = nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
+    loss_fn = (
+        nn.L1Loss()
+    )  # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
     optimizer = optim.SGD(model.parameters(), lr=0.001)
 
     history = train(
@@ -146,17 +147,19 @@ if __name__ == "__main__":
 
     print(f"Test Loss: {test_loss:.4f}")
 
-    torch_input = torch.randn(*(1,3,224,224)).to(device)
+    torch_input = torch.randn(*(1, 3, 224, 224)).to(device)
 
     torch.onnx.export(
-        model,                      # model to be exported
-        torch_input,                # sample input tensor
-        "./model.onnx",             # where to save the ONNX file
-        export_params=True,         # store the trained parameter weights inside the model file
-        opset_version=11,           # specify the ONNX opset version
-        do_constant_folding=True,   # perform constant folding for optimization
-        input_names=['input'],      # the model's input names
-        output_names=['output'],    # the model's output names
-        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # dynamic axes for variable batch size
+        model,  # model to be exported
+        torch_input,  # sample input tensor
+        "./model.onnx",  # where to save the ONNX file
+        export_params=True,  # store the trained parameter weights inside the model file
+        opset_version=11,  # specify the ONNX opset version
+        do_constant_folding=True,  # perform constant folding for optimization
+        input_names=["input"],  # the model's input names
+        output_names=["output"],  # the model's output names
+        dynamic_axes={
+            "input": {0: "batch_size"},
+            "output": {0: "batch_size"},
+        },  # dynamic axes for variable batch size
     )
-
