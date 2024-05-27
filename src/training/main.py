@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms.v2 as transforms
+from torchsummary import summary
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
@@ -14,7 +15,7 @@ from net import ConvNet
 from data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 
 
 def train_epoch(
@@ -101,6 +102,7 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
             transforms.ColorJitter(0.5, 0.5, 0.5, 0.5),
             transforms.GaussianBlur(5, sigma=(0.1, 2.0)),
             #transforms.RandomHorizontalFlip(), #should not be here since the model would confuse left and right
+			transforms.Grayscale(),
             transforms.ToDtype(torch.float32, scale=True),
         ]
     )
@@ -121,42 +123,42 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
 
 
 if __name__ == "__main__":
-    if torch.backends.mps.is_available():
-        print("Device is mps")
-        device = torch.device("mps")
-    elif torch.cuda.is_available():
-        print("Device is cuda")
-        device = torch.device("cuda")
-    else:
-        print("Device is cpu")
-        device = torch.device("cpu")
+	if torch.backends.mps.is_available():
+		device = torch.device("mps")
+	elif torch.cuda.is_available():
+		device = torch.device("cuda")
+	else:
+		device = torch.device("cpu")
 
-    generator = torch.Generator().manual_seed(42)
-    train_loader, test_loader = get_data(generator)
-    model = ConvNet([3, 8, 16, 32, 64], [64 * 10 * 10, 64], 6)
-    model.to(device)
-    loss_fn = nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+	print("Device is",device)
 
-    history = train(
-        model, train_loader, test_loader, loss_fn, optimizer, device, epochs=10
-    )
+	generator = torch.Generator().manual_seed(42)
+	train_loader, test_loader = get_data(generator)
+	model = ConvNet([1, 16, 32, 48, 64], [64 * 10 * 10, 64], 6)
+	model.to(device)
+	loss_fn = nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
+	optimizer = optim.SGD(model.parameters(), lr=0.001)
+	summary(model, (1, 224, 224))
 
-    test_loss = test(model, test_loader, loss_fn, device)
+	history = train(
+		model, train_loader, test_loader, loss_fn, optimizer, device, epochs=10
+	)
 
-    print(f"Test Loss: {test_loss:.4f}")
+	test_loss = test(model, test_loader, loss_fn, device)
 
-    torch_input = torch.randn(*(1,3,224,224)).to(device)
+	print(f"Test Loss: {test_loss:.4f}")
 
-    torch.onnx.export(
-        model,                      # model to be exported
-        torch_input,                # sample input tensor
-        "./model.onnx",             # where to save the ONNX file
-        export_params=True,         # store the trained parameter weights inside the model file
-        opset_version=11,           # specify the ONNX opset version
-        do_constant_folding=True,   # perform constant folding for optimization
-        input_names=['input'],      # the model's input names
-        output_names=['output'],    # the model's output names
-        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # dynamic axes for variable batch size
-    )
+	torch_input = torch.randn(*(1,1,224,224)).to(device)
+
+	torch.onnx.export(
+		model,                      # model to be exported
+		torch_input,                # sample input tensor
+		"./model.onnx",             # where to save the ONNX file
+		export_params=True,         # store the trained parameter weights inside the model file
+		opset_version=11,           # specify the ONNX opset version
+		do_constant_folding=True,   # perform constant folding for optimization
+		input_names=['input'],      # the model's input names
+		output_names=['output'],    # the model's output names
+		dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # dynamic axes for variable batch size
+	)
 

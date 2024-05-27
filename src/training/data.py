@@ -33,25 +33,28 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 
 
 def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
-    labels = []
-    images = []
+	labels = []
+	images = []
 
-    subdirs = [
-        subdir for subdir in os.listdir(path) if os.path.isdir(f"{path}/{subdir}")
-    ]
+	subdirs = [
+		subdir for subdir in os.listdir(path) if os.path.isdir(f"{path}/{subdir}")
+	]
 
-    for subdir in subdirs:
-        subdir_labels = load_labels(f"{path}/{subdir}.csv")
+	for subdir in subdirs:
+		subdir_labels = load_labels(f"{path}/{subdir}.csv")
 
-        for label in subdir_labels:
-            labels.append(label)
+		for label in subdir_labels:
+			labels.append(label)
+			forward, right = label
+			if forward < 0.5 and right <0.3: # to stop the jetbot from standing
+				forward = 0.7
 
-            img_name = str(int(label[0]))
-            img_name = "0" * (4 - len(img_name)) + img_name
+			img_name = str(int(label[0]))
+			img_name = "0" * (4 - len(img_name)) + img_name
 
-            images.append(f"{path}/{subdir}/{img_name}.jpg")
+			images.append(f"{path}/{subdir}/{img_name}.jpg")
 
-    return labels, images
+	return labels, images
 
 
 def load_labels(path: str) -> list[list[float]]:
