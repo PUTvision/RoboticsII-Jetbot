@@ -50,7 +50,7 @@ def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
 
 		for label in subdir_labels:
 			frame, forward, right = label
-			if forward < 0.5 and right <0.3: # to stop the jetbot from standing
+			if abs(forward) < 0.5 and abs(right) <0.3: # to stop the jetbot from standing
 				forward = 0.7
 
 			labels.append([forward, right])
