@@ -8,9 +8,9 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 from typing import Tuple
 
-
-from src.training.net import ConvNet
-from src.training.data import JetbotDataset
+from loss import WeightedMSELoss
+from net import ConvNet
+from data import JetbotDataset
 
 DATA_PATH = "./data/dataset"
 BATCH_SIZE = 256
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 	train_loader, test_loader = get_data(generator)
 	model = ConvNet([1, 16, 32, 48, 64], [64 * 10 * 10, 64], 6)
 	model.to(device)
-	loss_fn = nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
+	loss_fn = WeightedMSELoss(weights=torch.tensor([2,10]*3,dtype=torch.float32).to(device))#nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
 	optimizer = optim.SGD(model.parameters(), lr=0.001)
 	summary(model, (1, 224, 224))
 

@@ -24,9 +24,9 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
         img = torchvision.io.read_image(self.images[idx])
         label = torch.tensor(
             (
-                self.labels[min(idx, len(self.labels) - 1)][1:]
-                + self.labels[min(idx + self.shift, len(self.labels) - 1)][1:]
-                + self.labels[min(idx + 2 * self.shift, len(self.labels) - 1)][1:]
+                self.labels[min(idx, len(self.labels) - 1)]
+                + self.labels[min(idx + self.shift, len(self.labels) - 1)]
+                + self.labels[min(idx + 2 * self.shift, len(self.labels) - 1)]
             ),
             dtype=torch.float32,
         )
@@ -49,10 +49,11 @@ def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
 		subdir_labels = load_labels(f"{path}/{subdir}.csv")
 
 		for label in subdir_labels:
-			labels.append(label)
-			forward, right = label
+			frame, forward, right = label
 			if forward < 0.5 and right <0.3: # to stop the jetbot from standing
 				forward = 0.7
+
+			labels.append([forward, right])
 
 			img_name = str(int(label[0]))
 			img_name = "0" * (4 - len(img_name)) + img_name
