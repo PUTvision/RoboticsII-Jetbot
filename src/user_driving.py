@@ -64,6 +64,16 @@ def main(record):
 
     video_capture = cv2.VideoCapture(gstreamer_pipeline(flip_method=0, display_width=224, display_height=224), cv2.CAP_GSTREAMER)
 
+    print('Turn gamepad sticks around to center.')
+    while True:
+        forward, left = joy.read()
+        # "\r" to print on the same line
+        print(f'  Forward: {forward:.4f}\tLeft: {left:.4f}  ', end='\r', flush=True)
+        if abs(forward) < 0.05 and abs(left) < 0.05:
+            print('\n\nCentered')
+            break
+    input('Press enter> ')
+
     if record:
         prev_image = video_capture.read()[1]
         key = str(time.time())
