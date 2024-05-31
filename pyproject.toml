@@ -20,6 +20,8 @@ pyyaml = "^6.0.1"
 onnxruntime = "^1.18.0"
 torch = "^2.3.0"
 torchvision = "^0.18.0"
+onnx = "^1.16.1"
+torchmetrics = "^1.4.0.post0"
 
 
 [build-system]
