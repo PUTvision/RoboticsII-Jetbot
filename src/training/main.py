@@ -13,13 +13,13 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from loss import WeightedMSELoss
+from loss import WeightedMSELoss,WeightedSpaceMSELoss
 from net import ConvNet
 from data import JetbotDataset
 from transforms import RandomHorizontalAndLabelFlip, HalfCrop
 
 DATA_PATH = "./data/dataset"
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 IMG_SIZE = 224
 CHANNELS = 3
 
@@ -32,25 +32,33 @@ def train_epoch(
     optimizer: optim.Optimizer,
     device: torch.device,
 ):
-    model.train()
-    train_loss = 0.0
-    train_metric = 0.0
+	model.train()
+	train_loss = 0.0
+	train_metric = 0.0
 
-    for X, y in tqdm(train_loader, "batch"):
-        X, y = X.to(device), y.to(device)
-        optimizer.zero_grad()
+	weighted = train_loader.dataset.dataset.weighted
 
-        y_pred = model(X)
+	for out in tqdm(train_loader, "batch"):
+		X, y, w = None,None,None
+		if not weighted:
+			X,y = out
+		else:
+			X,y,w = out
+			w.to(device)
+		X, y = X.to(device), y.to(device)
+		optimizer.zero_grad()
 
-        loss = loss_fn(y_pred, y)
-        metric = metric_fn(y_pred, y)
-        loss.backward()
-        optimizer.step()
+		y_pred = model(X)
 
-        train_metric += metric.item()
-        train_loss += loss.item()
+		loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+		metric = metric_fn(y_pred, y)
+		loss.backward()
+		optimizer.step()
 
-    return train_loss / len(train_loader), train_metric / len(train_loader)
+		train_metric += metric.item()
+		train_loss += loss.item()
+
+	return train_loss / len(train_loader), train_metric / len(train_loader)
 
 
 def val_epoch(
@@ -60,23 +68,31 @@ def val_epoch(
     metric_fn: nn.Module,
     device: torch.device,
 ):
-    model.eval()
-    val_loss = 0.0
-    val_metric = 0.0
+	model.eval()
+	val_loss = 0.0
+	val_metric = 0.0
 
-    with torch.no_grad():
-        for X, y in tqdm(val_loader):
-            X, y = X.to(device), y.to(device)
+	weighted = val_loader.dataset.dataset.weighted
 
-            y_pred = model(X)
+	with torch.no_grad():
+		for out in tqdm(val_loader):
+			X, y, w = None,None,None
+			if not weighted:
+				X,y = out
+			else:
+				X,y,w = out
+				w.to(device)
+			X, y = X.to(device), y.to(device)
 
-            loss = loss_fn(y_pred, y)
-            metric = metric_fn(y_pred, y)
+			y_pred = model(X)
 
-            val_loss += loss.item()
-            val_metric += metric.item()
+			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+			metric = metric_fn(y_pred, y)
 
-    return val_loss / len(val_loader), val_metric / len(val_loader)
+			val_loss += loss.item()
+			val_metric += metric.item()
+
+	return val_loss / len(val_loader), val_metric / len(val_loader)
 
 
 def train(
@@ -114,6 +130,10 @@ def train(
 
 		early_stopping += 1
 
+		if prev_loss > val_loss:
+			prev_loss = val_loss
+			early_stopping = 0
+
 		if early_stopping >= patience:
 			print("No significant improvement")
 			return history
@@ -128,23 +148,31 @@ def test(
     metric_fn: nn.Module,
     device: torch.device,
 ):
-    model.eval()
-    test_loss = 0.0
-    test_metric = 0.0
+	model.eval()
+	test_loss = 0.0
+	test_metric = 0.0
 
-    with torch.no_grad():
-        for X, y in tqdm(test_loader, "test_batch"):
-            X, y = X.to(device), y.to(device)
+	weighted = test_loader.dataset.dataset.weighted
 
-            y_pred = model(X)
+	with torch.no_grad():
+		for out in tqdm(test_loader, "test_batch"):
+			X, y, w = None,None,None
+			if not weighted:
+				X,y = out
+			else:
+				X,y,w = out
+				w = w.to(device)
+			X, y = X.to(device), y.to(device)
 
-            loss = loss_fn(y_pred, y)
-            metric = metric_fn(y_pred, y)
+			y_pred = model(X)
 
-            test_loss += loss.item()
-            test_metric += metric.item()
+			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+			metric = metric_fn(y_pred, y)
 
-    return test_loss / len(test_loader), test_metric / len(test_loader)
+			test_loss += loss.item()
+			test_metric += metric.item()
+
+	return test_loss / len(test_loader), test_metric / len(test_loader)
 
 
 def display_img(img):
@@ -152,7 +180,7 @@ def display_img(img):
 	cv2.waitKey(0)
 
 
-def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
+def get_data(generator: torch.Generator,weighted=False) -> Tuple[DataLoader, DataLoader]:
 	transform = transforms.Compose(
 		[
 			transforms.RandomRotation([5, 5]),
@@ -168,8 +196,8 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
 	)
 
 	ds = JetbotDataset(
-		DATA_PATH, transform, shift=5
-	)  # predict the move 5 frames later and 10 framers later
+		DATA_PATH, transform,weighted=weighted
+	)
 
 	# for i in [181,2137,4312]:
 	# 	img,lab = ds[i]
@@ -177,7 +205,7 @@ def get_data(generator: torch.Generator) -> Tuple[DataLoader, DataLoader]:
 
 	train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
 	return DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True), DataLoader(
-		test_set, batch_size=BATCH_SIZE, shuffle=False
+		test_set, batch_size=BATCH_SIZE, shuffle=False,num_workers=6
 	)
 
 
@@ -191,7 +219,7 @@ if __name__ == "__main__":
 	print("Device is",device)
 
 	generator = torch.Generator().manual_seed(42)
-	train_loader, test_loader = get_data(generator)
+	train_loader, test_loader = get_data(generator,weighted=True)
 
 	model = ConvNet(
 		[CHANNELS, 24, 36, 48, 64,64],
@@ -203,9 +231,11 @@ if __name__ == "__main__":
 	summary(model, (CHANNELS, IMG_SIZE, int(IMG_SIZE/2)))
 
 	metric_fn = MeanAbsoluteError().to(device)
-	loss_fn = WeightedMSELoss(
-		weights=torch.tensor([2, 10] * 3, dtype=torch.float32).to(device)
-	)  # nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
+	# loss_fn = WeightedMSELoss(
+	# 	weights=torch.tensor([2, 10], dtype=torch.float32).to(device)
+	# )  # nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
+	
+	loss_fn = WeightedSpaceMSELoss()
 
 	optimizer = optim.SGD(model.parameters(), lr=0.001)
 
@@ -217,7 +247,7 @@ if __name__ == "__main__":
 		metric_fn,
 		optimizer,
 		device,
-		epochs=15,
+		epochs=40,
 	)
 
 	test_loss, test_metric = test(model, test_loader, loss_fn, metric_fn, device)

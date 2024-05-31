@@ -12,10 +12,12 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 		path: str,
 		transforms: Optional[Callable] = None,
 		shift=0,  # to adjust for latency in model
+		weighted = False,
 	):
 		super(JetbotDataset, self).__init__(root=path, transforms=transforms)
-		self.labels, self.images = load_files(path)
+		self.labels, self.images, self.weights = load_files(path)
 		self.shift = shift
+		self.weighted = weighted
 
 	def __len__(self):
 		return len(self.images)
@@ -31,15 +33,17 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 			),
 			dtype=torch.float32,
 		)
+		weights = torch.tensor(self.weights[min(idx, len(self.weights) - 1)],dtype=torch.float32)
 
 		if not self.transforms:
 			return img, label
 
-		return self.transforms(img, label)
+		return self.transforms(img, label) if self.weighted else self.transforms(img,label) + weights
 
 
 def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
 	labels = []
+	weights = []
 	images = []
 
 	subdirs = [
@@ -55,13 +59,14 @@ def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
 			# 	forward = 0.7
 
 			labels.append([forward, right])
+			weights.append((10*abs(right))+2)
 
 			img_name = str(int(label[0]))
 			img_name = "0" * (4 - len(img_name)) + img_name
 
 			images.append(f"{path}/{subdir}/{img_name}.jpg")
 
-	return labels, images
+	return labels, images, weights
 
 
 def load_labels(path: str) -> list[list[float]]:
