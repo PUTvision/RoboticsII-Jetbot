@@ -7,34 +7,35 @@ from typing import Callable, List, Optional, Tuple
 
 
 class JetbotDataset(torchvision.datasets.VisionDataset):
-    def __init__(
-        self,
-        path: str,
-        transforms: Optional[Callable] = None,
-        shift=0,  # to adjust for latency in model
-    ):
-        super(JetbotDataset, self).__init__(root=path, transforms=transforms)
-        self.labels, self.images = load_files(path)
-        self.shift = shift
+	def __init__(
+		self,
+		path: str,
+		transforms: Optional[Callable] = None,
+		shift=0,  # to adjust for latency in model
+	):
+		super(JetbotDataset, self).__init__(root=path, transforms=transforms)
+		self.labels, self.images = load_files(path)
+		self.shift = shift
 
-    def __len__(self):
-        return len(self.images)
+	def __len__(self):
+		return len(self.images)
 
-    def __getitem__(self, idx):
-        img = torchvision.io.read_image(self.images[idx])
-        label = torch.tensor(
-            (
-                self.labels[min(idx, len(self.labels) - 1)]
-                + self.labels[min(idx + self.shift, len(self.labels) - 1)]
-                + self.labels[min(idx + 2 * self.shift, len(self.labels) - 1)]
-            ),
-            dtype=torch.float32,
-        )
+	def __getitem__(self, idx):
+		img = torchvision.io.read_image(self.images[idx])
+		#print(self.images[idx])
+		label = torch.tensor(
+			(
+				self.labels[min(idx, len(self.labels) - 1)]
+				# + self.labels[min(idx + self.shift, len(self.labels) - 1)]
+				# + self.labels[min(idx + 2 * self.shift, len(self.labels) - 1)]
+			),
+			dtype=torch.float32,
+		)
 
-        if not self.transforms:
-            return img, label
+		if not self.transforms:
+			return img, label
 
-        return self.transforms(img, label)
+		return self.transforms(img, label)
 
 
 def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
@@ -50,8 +51,8 @@ def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
 
 		for label in subdir_labels:
 			frame, forward, right = label
-			if abs(forward) < 0.5 and abs(right) <0.3: # to stop the jetbot from standing
-				forward = 0.7
+			# if abs(forward) < 0.5 and abs(right) <0.3: # to stop the jetbot from standing
+			# 	forward = 0.7
 
 			labels.append([forward, right])
 
