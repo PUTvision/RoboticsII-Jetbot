@@ -38,19 +38,15 @@ def train_epoch(
 
 	weighted = train_loader.dataset.dataset.weighted
 
-	for out in tqdm(train_loader, "batch"):
-		X, y, w = None,None,None
-		if not weighted:
-			X,y = out
-		else:
-			X,y,w = out
-			w.to(device)
+	for X,y,w in tqdm(train_loader, "batch"):
 		X, y = X.to(device), y.to(device)
+		if w != None: 
+			w = w.to(device)
 		optimizer.zero_grad()
 
 		y_pred = model(X)
 
-		loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+		loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
 		metric = metric_fn(y_pred, y)
 		loss.backward()
 		optimizer.step()
@@ -75,18 +71,14 @@ def val_epoch(
 	weighted = val_loader.dataset.dataset.weighted
 
 	with torch.no_grad():
-		for out in tqdm(val_loader):
-			X, y, w = None,None,None
-			if not weighted:
-				X,y = out
-			else:
-				X,y,w = out
-				w.to(device)
+		for X,y,w in tqdm(val_loader):
 			X, y = X.to(device), y.to(device)
+			if w != None: 
+				w = w.to(device)
 
 			y_pred = model(X)
 
-			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+			loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
 			metric = metric_fn(y_pred, y)
 
 			val_loss += loss.item()
@@ -155,18 +147,14 @@ def test(
 	weighted = test_loader.dataset.dataset.weighted
 
 	with torch.no_grad():
-		for out in tqdm(test_loader, "test_batch"):
-			X, y, w = None,None,None
-			if not weighted:
-				X,y = out
-			else:
-				X,y,w = out
+		for X,y,w in tqdm(test_loader, "test_batch"):
+			if w != None:
 				w = w.to(device)
 			X, y = X.to(device), y.to(device)
 
 			y_pred = model(X)
 
-			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
+			loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
 			metric = metric_fn(y_pred, y)
 
 			test_loss += loss.item()

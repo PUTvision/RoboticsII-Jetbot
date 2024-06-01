@@ -15,5 +15,5 @@ class WeightedSpaceMSELoss(nn.Module):
 
 	def forward(self, output, target,weights):
 		# weights = (torch.abs(target[:,1]*10)+2)
-		# weights = weights.reshape(weights.shape[0],1)
+		weights = weights.reshape(weights.shape[0],1)
 		return (weights * (output - target) ** 2).mean()

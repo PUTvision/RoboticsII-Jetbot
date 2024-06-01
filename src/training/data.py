@@ -33,12 +33,15 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 			),
 			dtype=torch.float32,
 		)
-		weights = torch.tensor(self.weights[min(idx, len(self.weights) - 1)],dtype=torch.float32)
+		weights = None
+		if self.weighted:
+			weights = torch.tensor(self.weights[min(idx, len(self.weights) - 1)],dtype=torch.float32)
 
-		if not self.transforms:
-			return img, label
+		if self.transforms != None:
+			img,label = self.transforms(img,label)
 
-		return self.transforms(img, label) if self.weighted else self.transforms(img,label) + weights
+		#return self.transforms(img, label) if self.weighted else self.transforms(img,label) + weights
+		return img,label,weights
 
 
 def load_files(path: str) -> Tuple[List[List[float]], List[str]]:
