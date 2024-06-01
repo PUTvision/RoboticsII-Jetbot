@@ -35,8 +35,7 @@ def train_epoch(
 	model.train()
 	train_loss = 0.0
 	train_metric = 0.0
-
-	weighted = train_loader.dataset.dataset.weighted
+	train_loader.dataset.dataset.train()
 
 	for X,y,w in tqdm(train_loader, "batch"):
 		X, y = X.to(device), y.to(device)
@@ -67,8 +66,7 @@ def val_epoch(
 	model.eval()
 	val_loss = 0.0
 	val_metric = 0.0
-
-	weighted = val_loader.dataset.dataset.weighted
+	val_loader.dataset.dataset.eval()
 
 	with torch.no_grad():
 		for X,y,w in tqdm(val_loader):
@@ -144,7 +142,7 @@ def test(
 	test_loss = 0.0
 	test_metric = 0.0
 
-	weighted = test_loader.dataset.dataset.weighted
+	test_loader.dataset.dataset.eval()
 
 	with torch.no_grad():
 		for X,y,w in tqdm(test_loader, "test_batch"):
@@ -169,22 +167,25 @@ def display_img(img):
 
 
 def get_data(generator: torch.Generator,weighted=False) -> Tuple[DataLoader, DataLoader]:
-	transform = transforms.Compose(
+	preprocess = transforms.Compose([
+		HalfCrop(IMG_SIZE),
+		transforms.ToDtype(torch.float32, scale=True),
+	])
+
+	data_aug = transforms.Compose(
 		[
 			transforms.RandomRotation([5, 5]),
 			transforms.RandomResizedCrop(IMG_SIZE, scale=(0.95, 1.0)),
 			transforms.ColorJitter(0.25, 0.25, 0.25, 0.25),
-			#transforms.GaussianBlur(5, sigma=(0.1, 2.0)),
+			transforms.GaussianBlur(5, sigma=(0.1, 2.0)),
 			#transforms.RandomHorizontalFlip(), #should not be here since the model would confuse left and right
 			RandomHorizontalAndLabelFlip(0.5), # flips the image and the label
-			#transforms.Grayscale(),
-			HalfCrop(IMG_SIZE),
-			transforms.ToDtype(torch.float32, scale=True),
+			#transforms.Grayscale(),			
 		]
 	)
 
 	ds = JetbotDataset(
-		DATA_PATH, transform,weighted=weighted
+		DATA_PATH, preprocess,data_aug,weighted=weighted,min_w=5,max_w=20
 	)
 
 	# for i in [181,2137,4312]:
@@ -192,7 +193,7 @@ def get_data(generator: torch.Generator,weighted=False) -> Tuple[DataLoader, Dat
 	# 	display_img(img)
 
 	train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
-	return DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True), DataLoader(
+	return DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,num_workers=6), DataLoader(
 		test_set, batch_size=BATCH_SIZE, shuffle=False,num_workers=6
 	)
 
@@ -210,9 +211,9 @@ if __name__ == "__main__":
 	train_loader, test_loader = get_data(generator,weighted=True)
 
 	model = ConvNet(
-		[CHANNELS, 24, 36, 48, 64,64],
-		[5,5,5,3,3,3],
-		[2,2,2,2,None,None],
+		[CHANNELS, 24, 36, 48, 64,64,64],
+		[5,5,5,5,3,3,3],
+		[2,2,2,2,2,None,None],
 		[100,50,10], 
 		2,int(IMG_SIZE/2),IMG_SIZE)
 	model.to(device)
