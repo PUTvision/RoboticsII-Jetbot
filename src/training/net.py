@@ -12,11 +12,12 @@ class ConvNet(nn.Module):
 
 		out_formula = lambda x,k:math.floor(((x - k)/k) +1 )
 		for a, b, k,mk in zip(conv_sizes[:-1], conv_sizes[1:],kernel_sizes,max_pool_ks):
-			blocks.append(nn.Conv2d(a, b, kernel_size=k))
-			img_h = img_h - k +1
-			img_w = img_w - k +1
+			blocks.append(nn.Conv2d(a, b, kernel_size=k,padding="same"))
+			# img_h = img_h - k +1
+			# img_w = img_w - k +1
+			blocks.append(nn.BatchNorm2d(b)) # batchnorm before relu
 			blocks.append(nn.ReLU())
-			blocks.append(nn.BatchNorm2d(b))
+			#blocks.append(nn.Dropout2d(0.3)) # do not combine batch norm with dropout
 			if mk != None:
 				blocks.append(nn.MaxPool2d(mk))
 				img_h = out_formula(img_h,mk)
@@ -29,6 +30,7 @@ class ConvNet(nn.Module):
 			print(a,b)
 			blocks.append(nn.Linear(a, b))
 			blocks.append(nn.ReLU())
+			#blocks.append(nn.Dropout1d(0.3))
 
 		blocks.append(nn.Linear(linear_sizes[-1], output_size))
 		blocks.append(nn.Tanh())
