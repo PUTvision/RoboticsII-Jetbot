@@ -22,6 +22,7 @@ DATA_PATH = "./data/dataset"
 BATCH_SIZE = 64
 IMG_SIZE = 224
 CHANNELS = 3
+THREADS = 6
 
 
 def train_epoch(
@@ -36,16 +37,17 @@ def train_epoch(
 	train_loss = 0.0
 	train_metric = 0.0
 	train_loader.dataset.dataset.train()
+	weighted = train_loader.dataset.dataset.weighted
 
 	for X,y,w in tqdm(train_loader, "batch"):
 		X, y = X.to(device), y.to(device)
-		if w != None: 
+		if weighted: 
 			w = w.to(device)
 		optimizer.zero_grad()
 
 		y_pred = model(X)
 
-		loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
+		loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
 		metric = metric_fn(y_pred, y)
 		loss.backward()
 		optimizer.step()
@@ -67,16 +69,17 @@ def val_epoch(
 	val_loss = 0.0
 	val_metric = 0.0
 	val_loader.dataset.dataset.eval()
+	weighted = val_loader.dataset.dataset.weighted
 
 	with torch.no_grad():
 		for X,y,w in tqdm(val_loader):
 			X, y = X.to(device), y.to(device)
-			if w != None: 
+			if weighted: 
 				w = w.to(device)
 
 			y_pred = model(X)
 
-			loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
+			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
 			metric = metric_fn(y_pred, y)
 
 			val_loss += loss.item()
@@ -143,16 +146,17 @@ def test(
 	test_metric = 0.0
 
 	test_loader.dataset.dataset.eval()
+	weighted = test_loader.dataset.dataset.weighted
 
 	with torch.no_grad():
 		for X,y,w in tqdm(test_loader, "test_batch"):
-			if w != None:
+			if weighted:
 				w = w.to(device)
 			X, y = X.to(device), y.to(device)
 
 			y_pred = model(X)
 
-			loss = loss_fn(y_pred, y) if w == None else loss_fn(y_pred,y,w)
+			loss = loss_fn(y_pred, y) if not weighted else loss_fn(y_pred,y,w)
 			metric = metric_fn(y_pred, y)
 
 			test_loss += loss.item()
@@ -193,8 +197,8 @@ def get_data(generator: torch.Generator,weighted=False) -> Tuple[DataLoader, Dat
 	# 	display_img(img)
 
 	train_set, test_set = random_split(ds, [0.8, 0.2], generator=generator)
-	return DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,num_workers=6), DataLoader(
-		test_set, batch_size=BATCH_SIZE, shuffle=False,num_workers=6
+	return DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True,num_workers=THREADS), DataLoader(
+		test_set, batch_size=BATCH_SIZE, shuffle=False,num_workers=THREADS
 	)
 
 
@@ -208,7 +212,7 @@ if __name__ == "__main__":
 	print("Device is",device)
 
 	generator = torch.Generator().manual_seed(42)
-	train_loader, test_loader = get_data(generator,weighted=True)
+	train_loader, test_loader = get_data(generator,weighted=False)
 
 	model = ConvNet(
 		[CHANNELS, 24, 36, 48, 64,64,64],
@@ -224,7 +228,7 @@ if __name__ == "__main__":
 	# 	weights=torch.tensor([2, 10], dtype=torch.float32).to(device)
 	# )  # nn.L1Loss() # output is between -1 and 1, so when the difference is smaller than 1 the MSE actually makes it smaller
 	
-	loss_fn = WeightedSpaceMSELoss()
+	loss_fn = nn.L1Loss()#WeightedSpaceMSELoss()
 
 	optimizer = optim.SGD(model.parameters(), lr=0.001)
 

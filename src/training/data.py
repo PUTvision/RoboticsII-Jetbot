@@ -44,7 +44,7 @@ class JetbotDataset(torchvision.datasets.VisionDataset):
 			),
 			dtype=torch.float32,
 		)
-		weights = None
+		weights = torch.empty(1)
 
 		if self.weighted:
 			weights = torch.tensor(self.weights[min(idx, len(self.weights) - 1)],dtype=torch.float32)
@@ -77,7 +77,7 @@ def load_files(path: str,min_w=10,max_w=20) -> Tuple[List[List[float]], List[str
 			# 	forward = 0.7
 
 			labels.append([forward, right])
-			weights.append(((max_w-min_w)*abs(right))+min_w)
+			weights.append(((max_w-min_w)*int(right!=0))+min_w)#abs(right))+min_w)
 
 			img_name = str(int(label[0]))
 			img_name = "0" * (4 - len(img_name)) + img_name
