@@ -1,6 +1,8 @@
 # Robotics II - the Jetbot track follower
 ## Poznan University of Technology, Institute of Robotics and Machine Intelligence
 
+[Fork](https://github.com/Wojciechm-AdapptLimited/RoboticsII-Jetbot/) of the project repo of Łukasz Andryszewski and Wojciech Mączka.
+
 The project repository is a part of the [Robotics II](https://jug.dpieczynski.pl/lab-roboticsII/) subject which is a part of the Artificial Intelligence course.
 
 <p align="center">
